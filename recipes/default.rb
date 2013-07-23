@@ -1,3 +1,5 @@
+servers = node['p2p-network']['servers']
+
 unless Chef::Config[:solo]
   case node['p2p-network']['search_by']
   when "recipe"
@@ -16,6 +18,11 @@ unless Chef::Config[:solo]
   servers += search(:node, query)
 end
 
+unless servers
+  Chef::Log.info "Neither server found"
+  return
+end
+
 servers.each do | server |
   unless server['p2p-network']['ipaddress']
     Chef::Log.info("Server #{server["hostname"]} can't be added in p2p-network")
@@ -27,5 +34,14 @@ servers.each do | server |
     remote server['p2p-network']['ipaddress']
     local node['p2p-network']['ipaddress']
     interface node['p2p-network']['interface'] if node['p2p-network']['interface']
+  end
+
+#  ifconfig "" do
+#    device
+#  end
+
+  route server['p2p-network']['network'] do
+    device "tun_#{server["hostname"]}"
+    only_if server['p2p-network']['network']
   end
 end
