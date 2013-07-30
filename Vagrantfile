@@ -75,9 +75,10 @@ Vagrant.configure("2") do |config|
   config.vm.provision :chef_solo do |chef|
     chef.json = {
       'p2p-network' => {
+        'internal' => { 'ipaddress' => '10.123.123.10' },
         'servers' => [
-          { 'hostname' => "test1", "p2p-network" => { 'ipaddress' => "33.33.33.11" } },
-          { 'hostname' => "test2", "p2p-network" => { 'ipaddress' => "33.33.33.12" } }
+          { 'hostname' => "test1", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.11" }, 'internal' => { 'ipaddress' => "10.123.123.11" } } },
+          { 'hostname' => "test2", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.12" }, 'internal' => { 'ipaddress' => "10.123.123.12" } } }
         ]
       }
     }
