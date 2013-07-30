@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
   # options are documented and commented below. For a complete reference,
   # please see the online documentation at vagrantup.com.
 
-  config.vm.hostname = "p2p-network-berkshelf"
+#  config.vm.hostname = "p2p-network-berkshelf"
 
   # Every Vagrant virtual environment requires a box to build off of.
   config.vm.box = "precise-server-cloudimg-vagrant-amd64-disk1"
@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
   # via the IP. Host-only networks can talk to the host machine as well as
   # any other machines on the same network, but cannot be accessed (through this
   # network interface) by any external networks.
-  config.vm.network :private_network, ip: "33.33.33.10"
+#  config.vm.network :private_network, ip: "33.33.33.10"
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -72,13 +72,17 @@ Vagrant.configure("2") do |config|
 
   config.omnibus.chef_version = :latest
 
-  config.vm.provision :chef_solo do |chef|
+  config.vm.define :host0 do |host0|
+    host0.vm.hostname = "p2p-network-berkshelf-host0"
+    host0.vm.network :private_network, ip: "33.33.33.10"
+    host0.vm.provision :chef_solo do |chef|
     chef.json = {
       'p2p-network' => {
         'internal' => { 'ipaddress' => '10.123.123.10' },
+        'external' => { "interface" => "eth1", 'ipaddress' => nil },
         'servers' => [
-          { 'hostname' => "test1", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.11" }, 'internal' => { 'ipaddress' => "10.123.123.11" } } },
-          { 'hostname' => "test2", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.12" }, 'internal' => { 'ipaddress' => "10.123.123.12" } } }
+          { 'hostname' => "host1", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.11" }, 'internal' => { 'ipaddress' => "10.123.123.11", "network" => "192.168.11.0/24" } } },
+          { 'hostname' => "host2", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.12" }, 'internal' => { 'ipaddress' => "10.123.123.12", "network" => "192.168.12.0/24" } } }
         ]
       }
     }
@@ -86,5 +90,49 @@ Vagrant.configure("2") do |config|
     chef.run_list = [
         "recipe[p2p-network::default]"
     ]
+    end
   end
+
+  config.vm.define :host1 do |host1|
+    host1.vm.hostname = "p2p-network-berkshelf-host1"
+    host1.vm.network :private_network, ip: "33.33.33.11"
+    host1.vm.provision :chef_solo do |chef|
+    chef.json = {
+      'p2p-network' => {
+        'internal' => { 'ipaddress' => '10.123.123.11' },
+        'external' => { "interface" => "eth1", 'ipaddress' => nil },
+        'servers' => [
+          { 'hostname' => "host0", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.10" }, 'internal' => { 'ipaddress' => "10.123.123.10", "network" => "192.168.10.0/24" } } },
+          { 'hostname' => "host2", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.12" }, 'internal' => { 'ipaddress' => "10.123.123.12", "network" => "192.168.12.0/24" } } }
+        ]
+      }
+    }
+
+    chef.run_list = [
+        "recipe[p2p-network::default]"
+    ]
+    end
+  end
+
+  config.vm.define :host2 do |host2|
+    host2.vm.hostname = "p2p-network-berkshelf-host2"
+    host2.vm.network :private_network, ip: "33.33.33.12"
+    host2.vm.provision :chef_solo do |chef|
+    chef.json = {
+      'p2p-network' => {
+        'internal' => { 'ipaddress' => '10.123.123.12' },
+        'external' => { "interface" => "eth1", 'ipaddress' => nil },
+        'servers' => [
+          { 'hostname' => "host0", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.10" }, 'internal' => { 'ipaddress' => "10.123.123.10", "network" => "192.168.10.0/24" } } },
+          { 'hostname' => "host1", "p2p-network" => { 'external' => { 'ipaddress' => "33.33.33.11" }, 'internal' => { 'ipaddress' => "10.123.123.11", "network" => "192.168.11.0/24" } } }
+        ]
+      }
+    }
+
+    chef.run_list = [
+        "recipe[p2p-network::default]"
+    ]
+    end
+  end
+
 end
