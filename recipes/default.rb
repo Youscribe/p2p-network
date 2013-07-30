@@ -32,7 +32,7 @@ servers.each do | server |
 
   tunnel_ipip server["hostname"] do
     remote server['p2p-network']['external']['ipaddress']
-    local node['p2p-network']['external']['ipaddress']
+    local node['p2p-network']['external']['ipaddress'] if node['p2p-network']['external']['ipaddress']
     interface node['p2p-network']['external']['interface'] if node['p2p-network']['external']['interface']
   end
 
@@ -45,6 +45,7 @@ servers.each do | server |
   
   execute "add ip to tun_#{server["hostname"]}" do
     command "ip addr add #{node['p2p-network']['internal']['ipaddress']} dev tun_#{server["hostname"]}"
+    returns [0,2] # ip can be already here
     only_if {  node['p2p-network']['internal']['ipaddress'] }
   end
 
