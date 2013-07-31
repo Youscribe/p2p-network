@@ -6,22 +6,28 @@ unless Chef::Config[:solo]
     query = 'recipes:p2p-network'
   when "role"
     if node['p2p-network']['role']
-      query = "role:#{node['p2p-network']['role']}"
+      query = "roles:#{node['p2p-network']['role']}"
     else
       return "no role provided"
     end
   else
     return "bad value for node['tunnel']['search_by']"
   end
-  query += " AND chef_environment:#{node.chef_environment}" if node['tunnel']['restrict_environment']
+  query += " AND chef_environment:#{node.chef_environment}" if node['p2p-network']['restrict_environment']
   query += " NOT fqdn:#{node["fqdn"]}"
   Chef::Log.debug("p2p-network searching for '#{query}'")
   servers += search(:node, query) || []
 end
 
-unless servers
+if servers.empty?
   Chef::Log.info "Neither server found"
   return
+end
+
+ruby_block "Cleanup interfaces" do
+  block do
+    node.set['p2p-network']['interfaces'].clear
+  end
 end
 
 servers.each do | server |
@@ -31,10 +37,21 @@ servers.each do | server |
     next
   end
 
+  interface =  interface_name(server["hostname"])
+
   tunnel_ipip server["hostname"] do
+    tunnel_name interface
+    host server["hostname"]
     remote server['p2p-network']['external']['ipaddress']
     local node['p2p-network']['external']['ipaddress'] if node['p2p-network']['external']['ipaddress']
     interface node['p2p-network']['external']['interface'] if node['p2p-network']['external']['interface']
+  end
+
+  ruby_block "Register tunnel #{interface}" do
+    block do
+      interfaces = [ interface ] + node['p2p-network']['interfaces'].to_a
+      node.set['p2p-network']['interfaces'] = interfaces.sort.uniq
+    end
   end
 
 #  ifconfig "up tun_#{server["hostname"]}" do
@@ -44,24 +61,30 @@ servers.each do | server |
 #    only_if {  node['p2p-network']['internal']['ipaddress'] }
 #  end
   
-  execute "add ip to tun_#{server["hostname"]}" do
-    command "ip addr add #{node['p2p-network']['internal']['ipaddress']} dev tun_#{server["hostname"]}"
+  execute "add ip to #{interface}" do
+    command "ip addr add #{node['p2p-network']['internal']['ipaddress']} dev #{interface}"
     returns [0,2] # ip can be already here
     only_if {  node['p2p-network']['internal']['ipaddress'] }
   end
 
-  execute "up tun_#{server["hostname"]}" do
-    command "ip link set dev tun_#{server["hostname"]} up"
-    not_if "ip link show tun_test | grep -q UP"
+  execute "up #{interface}" do
+    command "ip link set dev #{interface} up"
+    not_if "ip link show #{interface} | grep -q UP"
   end
 
   route server['p2p-network']['internal']['ipaddress'] do
-    device "tun_#{server["hostname"]}"
+    device interface
     only_if { server['p2p-network']['internal']['ipaddress'] }
   end
 
   route server['p2p-network']['internal']['network'] do
-    device "tun_#{server["hostname"]}"
+    device interface
     only_if { server['p2p-network']['internal']['network'] }
+  end
+end
+
+ruby_block "Save changes to node" do
+  block do
+    node.save
   end
 end

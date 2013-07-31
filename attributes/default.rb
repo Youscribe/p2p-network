@@ -8,3 +8,5 @@ default['p2p-network']['internal']['ipaddress'] = nil
 
 default['p2p-network']['servers']               = []
 #                                              = [ {"hostname" => "test1", "p2p-network" => { "ipaddress" => "192.168.0.1"} } ]
+
+default['p2p-network']['interfaces']            = []
