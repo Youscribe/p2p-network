@@ -15,7 +15,7 @@ unless Chef::Config[:solo]
   end
   query += " AND chef_environment:#{node.chef_environment}" if node['tunnel']['restrict_environment']
   Chef::Log.debug("p2p-network searching for '#{query}'")
-  servers += search(:node, query)
+  servers += search(:node, query) || []
 end
 
 unless servers
