@@ -14,6 +14,7 @@ unless Chef::Config[:solo]
     return "bad value for node['tunnel']['search_by']"
   end
   query += " AND chef_environment:#{node.chef_environment}" if node['tunnel']['restrict_environment']
+  query += " NOT fqdn:#{node["fqdn"]}"
   Chef::Log.debug("p2p-network searching for '#{query}'")
   servers += search(:node, query) || []
 end
