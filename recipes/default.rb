@@ -72,12 +72,14 @@ servers.each do | server |
     not_if "ip link show #{interface} | grep -q UP"
   end
 
-  route server['p2p-network']['internal']['ipaddress'] do
+  route "ipaddress for #{interface}" do
+    target server['p2p-network']['internal']['ipaddress']
     device interface
     only_if { server['p2p-network']['internal']['ipaddress'] }
   end
 
-  route server['p2p-network']['internal']['network'] do
+  route "network for #{interface}" do
+    target server['p2p-network']['internal']['network']
     device interface
     only_if { server['p2p-network']['internal']['network'] }
   end
