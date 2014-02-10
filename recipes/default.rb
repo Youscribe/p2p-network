@@ -49,7 +49,7 @@ servers.each do | server |
 
   ruby_block "Register tunnel #{interface}" do
     block do
-      interfaces = [ interface ] + node['p2p-network']['interfaces'].to_a
+      interfaces = [interface] + node['p2p-network']['interfaces'].to_a
       node.set['p2p-network']['interfaces'] = interfaces.sort.uniq
     end
   end
@@ -60,10 +60,10 @@ servers.each do | server |
 #    action :enable
 #    only_if {  node['p2p-network']['internal']['ipaddress'] }
 #  end
-  
+
   execute "add ip to #{interface}" do
     command "ip addr add #{node['p2p-network']['internal']['ipaddress']} dev #{interface}"
-    returns [0,2] # ip can be already here
+    returns [0, 2] # ip can be already here
     only_if {  node['p2p-network']['internal']['ipaddress'] }
   end
 
@@ -72,13 +72,13 @@ servers.each do | server |
     not_if "ip link show #{interface} | grep -q UP"
   end
 
-  route "ipaddress for #{interface}" do
+  route "ipaddress for #{server["hostname"]}" do
     target server['p2p-network']['internal']['ipaddress']
     device interface
     only_if { server['p2p-network']['internal']['ipaddress'] }
   end
 
-  route "network for #{interface}" do
+  route "network for #{server["hostname"]}" do
     target server['p2p-network']['internal']['network']
     device interface
     only_if { server['p2p-network']['internal']['network'] }
