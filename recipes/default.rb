@@ -78,13 +78,16 @@ servers.each do | server |
     only_if { server['p2p-network']['internal']['ipaddress'] }
   end
 
-  ret_value = system("ip route | grep #{server['p2p-network']['internal']['network']}")
+  if server['p2p-network']['internal']['network'] then
+
+    ret_value = system("ip route | grep #{server['p2p-network']['internal']['network']}")
   
-  unless ret_value
-    route "network for #{server["hostname"]}" do
-      target server['p2p-network']['internal']['network']
-      device interface
-      only_if { server['p2p-network']['internal']['network'] }
+    unless ret_value
+      route "network for #{server["hostname"]}" do
+        target server['p2p-network']['internal']['network']
+        device interface
+        only_if { server['p2p-network']['internal']['network'] }
+      end
     end
   end
 end
