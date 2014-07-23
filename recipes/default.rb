@@ -78,7 +78,7 @@ servers.each do | server |
     only_if { server['p2p-network']['internal']['ipaddress'] }
   end
 
-  if server['p2p-network']['internal']['network'] then
+  if server['p2p-network']['internal']['network']
 
     ret_value = system("ip route | grep #{server['p2p-network']['internal']['network']}")
   
